@@ -1,3 +1,4 @@
+RottenTomatoesApp
 # Rotten Tomatoes Homework
 # Number of hours spent: 7
 # Completed stories
