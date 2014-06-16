@@ -11,7 +11,8 @@
 
 @interface MovieDetailViewController ()
 @property (weak, nonatomic) IBOutlet UILabel *synopsisLabel;
-
+@property (weak, nonatomic) IBOutlet UILabel *titleLabel;
+@property (weak, nonatomic) IBOutlet UIScrollView *contentScrollView;
 @property (weak, nonatomic) IBOutlet UIImageView *moviePosterImageView;
 
 @end
@@ -22,7 +23,7 @@
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
-        // Custom initialization
+
     }
     return self;
 }
@@ -30,13 +31,15 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.title = self.movieTitle;
     self.synopsisLabel.text = self.movieSynopsis;
+    self.titleLabel.text = self.movieTitle;
     self.moviePosterImageView.alpha = 0;
+    self.contentScrollView.contentSize = CGSizeMake(700, 600);
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:self.posterDetailUrl]];
     AFHTTPRequestOperation *requestOperation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
     requestOperation.responseSerializer = [AFImageResponseSerializer serializer];
     [requestOperation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"Response: %@", responseObject);
         self.moviePosterImageView.image = responseObject;
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {

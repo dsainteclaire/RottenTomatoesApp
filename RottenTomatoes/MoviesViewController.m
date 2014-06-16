@@ -13,6 +13,7 @@
 #import "MovieDetailViewController.h"
 
 @interface MoviesViewController ()
+@property (strong, nonatomic) IBOutlet UIRefreshControl *refreshControl;
 @property (weak, nonatomic) IBOutlet UITableView *moviesTableView;
 @property (nonatomic, strong) NSArray *moviesArray;
 
@@ -34,19 +35,27 @@
     [super viewDidLoad];
     
     // Pull to refresh control
-    UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
-    [refreshControl addTarget:self action:@selector(refresh:) forControlEvents:UIControlEventValueChanged];
-    [self.moviesTableView addSubview:refreshControl];
+    self.refreshControl = [[UIRefreshControl alloc] init];
+    self.refreshControl.attributedTitle = [[NSAttributedString alloc] initWithString:@"Pull to Refresh"];
+    [self.refreshControl addTarget:self action:@selector(refresh) forControlEvents:UIControlEventValueChanged];
+    [self.moviesTableView addSubview:self.refreshControl];
+    
+    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 20)];
+    headerView.backgroundColor = [UIColor darkGrayColor];
+    UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 320, 20)];
+    [headerLabel setText:@"Networking Error!"];
+    [headerView addSubview:headerLabel];
+    self.moviesTableView.tableHeaderView = headerView;
     
     self.moviesTableView.delegate = self;
     self.moviesTableView.dataSource = self;
+
     
     NSString *url = @"http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/top_rentals.json?apikey=g9au4hv6khv6wzvzgt55gpqs";
     [MBProgressHUD showHUDAddedTo:self.view animated:YES];
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
     [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
         id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-        NSLog(@"%@", object);
         
         self.moviesArray = object[@"movies"];
         [MBProgressHUD hideHUDForView:self.view animated:YES];
@@ -83,7 +92,6 @@
     AFHTTPRequestOperation *requestOperation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
     requestOperation.responseSerializer = [AFImageResponseSerializer serializer];
     [requestOperation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"Response: %@", responseObject);
         cell.posterImage.image = responseObject;
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -102,22 +110,24 @@
     NSDictionary *posters = self.moviesArray[indexPath.row][@"posters"];
     NSDictionary *movie = self.moviesArray[indexPath.row];
     
-    detailController.posterDetailUrl = posters[@"detailed"];
+    detailController.posterDetailUrl = posters[@"original"];
     detailController.movieSynopsis = movie[@"synopsis"];
-    //trailsController.selectedRegion = [regions objectAtIndex:indexPath.row];
+    detailController.movieTitle = movie[@"title"];
+
     [[self navigationController] pushViewController:detailController animated:YES];
 }
 
-- (void)refresh:(id)sender
+- (void)refresh
 {
+    NSLog(@"Start of pull to refresh");
     NSString *url = @"http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/top_rentals.json?apikey=g9au4hv6khv6wzvzgt55gpqs";
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
     [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
         id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-        NSLog(@"%@", object);
         self.moviesArray = object[@"movies"];
         [self.moviesTableView reloadData];
     }];
+    [self.refreshControl endRefreshing];
 }
 
 @end

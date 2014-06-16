@@ -11,4 +11,5 @@
 @interface MovieDetailViewController : UIViewController
 @property (nonatomic) NSString *posterDetailUrl;
 @property (nonatomic) NSString *movieSynopsis;
+@property (nonatomic) NSString *movieTitle;
 @end
