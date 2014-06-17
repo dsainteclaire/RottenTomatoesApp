@@ -40,13 +40,6 @@
     [self.refreshControl addTarget:self action:@selector(refresh) forControlEvents:UIControlEventValueChanged];
     [self.moviesTableView addSubview:self.refreshControl];
     
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 20)];
-    headerView.backgroundColor = [UIColor darkGrayColor];
-    UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 320, 20)];
-    [headerLabel setText:@"Networking Error!"];
-    [headerView addSubview:headerLabel];
-    self.moviesTableView.tableHeaderView = headerView;
-    
     self.moviesTableView.delegate = self;
     self.moviesTableView.dataSource = self;
 
@@ -54,12 +47,20 @@
     NSString *url = @"http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/top_rentals.json?apikey=g9au4hv6khv6wzvzgt55gpqs";
     [MBProgressHUD showHUDAddedTo:self.view animated:YES];
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-    [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
-        id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-        
-        self.moviesArray = object[@"movies"];
-        [MBProgressHUD hideHUDForView:self.view animated:YES];
-        [self.moviesTableView reloadData];
+    [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
+        if ([data length] > 0 && error == nil) {
+            id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+            self.moviesArray = object[@"movies"];
+            [MBProgressHUD hideHUDForView:self.view animated:YES];
+            [self.moviesTableView reloadData];
+        } else {
+            UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 20)];
+            headerView.backgroundColor = [UIColor darkGrayColor];
+            UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 320, 20)];
+            [headerLabel setText:@"Networking Error!"];
+            [headerView addSubview:headerLabel];
+            self.moviesTableView.tableHeaderView = headerView;
+        }
     }];
     
     [self.moviesTableView registerNib:[UINib nibWithNibName:@"MovieCell" bundle:nil] forCellReuseIdentifier:@"MovieCell"];
@@ -120,12 +121,23 @@
 - (void)refresh
 {
     NSLog(@"Start of pull to refresh");
+    self.moviesTableView.tableHeaderView = nil;
     NSString *url = @"http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/top_rentals.json?apikey=g9au4hv6khv6wzvzgt55gpqs";
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-    [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
-        id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-        self.moviesArray = object[@"movies"];
-        [self.moviesTableView reloadData];
+    [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
+        if ([data length] > 0 && error == nil) {
+            id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+            self.moviesArray = object[@"movies"];
+            [MBProgressHUD hideHUDForView:self.view animated:YES];
+            [self.moviesTableView reloadData];
+        } else {
+            UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 20)];
+            headerView.backgroundColor = [UIColor darkGrayColor];
+            UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 320, 20)];
+            [headerLabel setText:@"Networking Error!"];
+            [headerView addSubview:headerLabel];
+            self.moviesTableView.tableHeaderView = headerView;
+        }
     }];
     [self.refreshControl endRefreshing];
 }
